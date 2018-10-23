@@ -2,33 +2,35 @@
 <form action="#" method="get" onsubmit="return update_tracker()">
 	<div>
 		<label for="pol">Check price every X seconds</label>
-		<input type="number" name="per"  id="pol" min='5'  placeholder="Default 30s">
+		<input type="number" name="per"  id="pol" min='5'  placeholder="Default 30s" required="">
 	</div>
 	<div>
 		<label for="min">Hide coin below X percent change</label>
-		<input type="number" name="hide" id="min" min='0.2' step="0.01" placeholder="Default .3%">
+		<input type="number" name="hide" id="min" min='0.2' step="0.01" placeholder="Default .3%" required="">
 	</div> 
 	<div>
 		<label for="min_price">Min price (in sats)</label>
-		<input type="number" name="price" id="min_price" min='1' placeholder="Default 100sat">
+		<input type="number" name="price" id="min_price" min='1' placeholder="Default 100sat" required="">
 	</div> 
-	<button type="submit">Apply</button>
+	<div>
+		<div id="countdown-1">00</div>
+		<button type="submit">Apply</button>
+	</div>
 </form>
-<div id="countdown-1"></div>
-
 <div class='table' id="table-1"></div>
 <style>
 body{
 	font-family:tahoma;
-	font-size:17px;
-	color: orange;
-	background-color: black;
+	font-size:15px;
+    color: #e2e2e2;
+    background-color: #262e33;
 }
 form{
 	max-width: 700px;
 	margin: auto;
 	text-align: center;
-	padding: 20px 0px;
+	padding:20px 0px 10px 0px;
+	border-bottom: 1px solid #8ad09c;
 
 }
 form>div{
@@ -38,12 +40,13 @@ justify-content: space-between;
 padding-bottom: 10px;
 }
 label{
-	font-weight: bold;
+	color: #8c8c8c;
+	cursor: pointer;
 }
 input{
 	height: 30px;
 	padding: 0 10px;
-	background:black !important;
+	background:#262e33 !important;
 	border: 1px solid orange;
 	outline: none;
 	color: orange;
@@ -51,24 +54,29 @@ input{
 	transition: all 200ms ease;
 }
 input:focus{
-	box-shadow: 0 0 10px orange;
+	box-shadow: 0 0 3px orange;
 	}
 button{
 	width: 100px;
 	outline: none;
 	height: 30px;
 	color: orange;
-	background:black !important;
+	background:#262e33 !important;
 	border: 1px solid orange;
 	border-radius: 3px;
 }
 #countdown-1{
-	text-align: center;
-	font-size: 20px;
-	border-bottom: 2px solid orange;
+    text-align: center;
+    font-size: 20px;
+    color: #70d6dc;
+    padding: 3px;
+    min-width: 30px;
+    border: 1px solid;
 }
 .table{
 	text-align: center;
+	max-width: 700px;
+	margin: auto;
 }
 .table>a{
     display: flex;
@@ -85,9 +93,18 @@ button{
 	margin-left:10px;
 	font-size: 10px;
 	padding: 3px 5px;
-	background: #444;
+	border:1px solid;
 	border-radius: 3px;
+	min-width: 40px;
 }
+.table a, .table span.prev{
+	color: rgb(112, 168, 0);
+}
+
+.table a[data-change^="-"], .table span.prev[data-change^="-"]{
+	color:rgb(234, 0, 112);
+}
+
 </style>
 <script>
 
@@ -173,10 +190,10 @@ function update_view(){
 
 	show.forEach(function(t){
 
-		row="<a target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
+		row="<a data-change='"+t.change+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.price+"</div>\
-				<div>"+t.change+"<span class='prev'>"+t.prev+"</span></div>\
+				<div>"+t.change+"<span class='prev' data-change='"+t.prev+"'>"+t.prev+"</span></div>\
 			</a>";
 
 		$("#table-1").append(row);
