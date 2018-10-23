@@ -1,0 +1,183 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<form action="#" method="get" onsubmit="return update_tracker()">
+	<div>
+		<label for="pol">Check price every X seconds</label>
+		<input type="number" name="per"  id="pol" min='5'  placeholder="X">
+	</div>
+	<div>
+		<label for="min">Hide coin below X percent change</label>
+		<input type="number" name="hide" id="min" min='0.2' step="0.01" placeholder="X">
+	</div> 
+	<button type="submit">Apply</button>
+</form>
+<div id="countdown-1"></div>
+
+<div class='table' id="table-1"></div>
+<style>
+body{
+	font-family:tahoma;
+	font-size:17px;
+	color: orange;
+	background-color: black;
+}
+form{
+	max-width: 700px;
+	margin: auto;
+	text-align: center;
+	padding: 20px 0px;
+
+}
+form>div{
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+padding-bottom: 10px;
+}
+label{
+	font-weight: bold;
+}
+input{
+	height: 30px;
+	padding: 0 10px;
+	background:black !important;
+	border: 1px solid orange;
+	outline: none;
+	color: orange;
+	border-radius: 3px;
+	transition: all 200ms ease;
+}
+input:focus{
+	box-shadow: 0 0 10px orange;
+	}
+button{
+	width: 100px;
+	outline: none;
+	height: 30px;
+	color: orange;
+	background:black !important;
+	border: 1px solid orange;
+	border-radius: 3px;
+}
+#countdown-1{
+	text-align: center;
+	font-size: 20px;
+	border-bottom: 2px solid orange;
+}
+.table{
+	text-align: center;
+}
+.table>a{
+	display:flex;
+	text-decoration: none;
+	justify-content: space-around;
+	border-bottom: 1px solid #ddd;
+	padding: 5px 0px;
+}
+.table>a:hover{
+	background: #ddd;
+}
+</style>
+<script>
+
+var instruments=[];
+
+var pol = 30;
+
+var count = pol;
+
+var hide_below = .3;
+
+var timer = 0;
+
+function load_instruments(dat){
+
+				dat.forEach(function(item){
+						if(item.symbol.indexOf("BTC")>0)
+							instruments.push(item);
+					});
+}
+
+function tick(){
+	$("#countdown-1").html(count);
+	if(count==0){
+		count=pol;
+		updater();
+	}
+	count--;
+}
+
+function updater(){ 
+
+				$.getJSON({
+						url:"https://api.binance.com/api/v1/ticker/allPrices",
+						success:function(dt){
+									dt.forEach(function(dt){
+										the = dt.symbol
+										id = instruments.findIndex(function(e){
+											if(e.symbol==the)
+												return true;
+											else 
+												return false;
+										});
+										if(id>-1){
+											ins = instruments[id];
+											instruments[id].change = Number.parseFloat(100*((dt.price-ins.price)/ins.price)).toFixed(2);
+											instruments[id].price=dt.price;
+										}
+									});
+									update_view();
+						}
+					});
+}
+
+function update_view(){
+
+	$(".table").html("");
+
+	show=[];
+
+	instruments.forEach(function(t){
+		if(Math.abs(t.change)>hide_below){
+			show.push(t);
+			console.log(t.change);
+		}
+	});
+
+	show.sort(function(a,b){
+			if(a.change<b.change)	
+				return 1;
+			else if(a.change>b.change)
+				return -1;
+			else
+				return 0;
+		});
+
+	show.forEach(function(t){
+
+		row="<a target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
+				<div>"+t.symbol+"</div>\
+				<div>"+t.price+"</div>\
+				<div>"+t.change+"</div>\
+			</a>";
+
+		$("#table-1").append(row);
+	});
+}
+
+function update_tracker(){
+	pol = count = Number($("#pol").val());
+	hide_below = Number($("#min").val());
+	return false;
+}
+
+function init(){
+	$.getJSON({url:"https://api.binance.com/api/v1/ticker/allPrices",
+			success:load_instruments
+			});
+}
+ 
+init();
+
+timer = setInterval(tick,1000);
+
+</script>
