@@ -77,6 +77,12 @@ button{
 .table>a:hover{
 	background: #222;
 }
+.prev{
+	font-size: 10px;
+	padding: 3px 5px;
+	background: #444;
+	border-radius: 3px;
+}
 </style>
 <script>
 
@@ -93,8 +99,10 @@ var timer = 0;
 function load_instruments(dat){
 
 				dat.forEach(function(item){
-						if(item.symbol.indexOf("BTC")>0)
+						if(item.symbol.indexOf("BTC")>0){
+							item.prev=0;
 							instruments.push(item);
+						}
 					});
 }
 
@@ -127,6 +135,7 @@ function updater(){
 										}
 									});
 									update_view();
+
 						}
 					});
 }
@@ -139,9 +148,9 @@ function update_view(){
 
 	instruments.forEach(function(t){
 		if(Math.abs(t.change)>hide_below){
-			show.push(t);
-			console.log(t.change);
+			show.push(t); 
 		}
+		t.prev=t.change;
 	});
 
 	show.sort(function(a,b){
@@ -158,7 +167,7 @@ function update_view(){
 		row="<a target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.price+"</div>\
-				<div>"+t.change+"</div>\
+				<div>"+t.change+"<span class='prev'>"+t.prev+"</span></div>\
 			</a>";
 
 		$("#table-1").append(row);
