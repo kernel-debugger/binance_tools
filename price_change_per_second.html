@@ -137,7 +137,8 @@ function updater(){
 									});
 									update_view();
 									instruments.forEach(function(t){
-										t.prev=t.change;
+										if(t.change!=0)
+											t.prev=t.change;
 									});
 						}
 					});
