@@ -78,6 +78,7 @@ button{
 	background: #222;
 }
 .prev{
+	margin-left:10px;
 	font-size: 10px;
 	padding: 3px 5px;
 	background: #444;
@@ -135,7 +136,9 @@ function updater(){
 										}
 									});
 									update_view();
-
+									instruments.forEach(function(t){
+										t.prev=t.change;
+									});
 						}
 					});
 }
@@ -149,8 +152,7 @@ function update_view(){
 	instruments.forEach(function(t){
 		if(Math.abs(t.change)>hide_below){
 			show.push(t); 
-		}
-		t.prev=t.change;
+		} 
 	});
 
 	show.sort(function(a,b){
