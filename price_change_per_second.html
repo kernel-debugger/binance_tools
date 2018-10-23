@@ -2,11 +2,15 @@
 <form action="#" method="get" onsubmit="return update_tracker()">
 	<div>
 		<label for="pol">Check price every X seconds</label>
-		<input type="number" name="per"  id="pol" min='5'  placeholder="X">
+		<input type="number" name="per"  id="pol" min='5'  placeholder="Default 30s">
 	</div>
 	<div>
 		<label for="min">Hide coin below X percent change</label>
-		<input type="number" name="hide" id="min" min='0.2' step="0.01" placeholder="X">
+		<input type="number" name="hide" id="min" min='0.2' step="0.01" placeholder="Default .3%">
+	</div> 
+	<div>
+		<label for="min_price">Min price (in sats)</label>
+		<input type="number" name="price" id="min_price" min='1' placeholder="Default 100sat">
 	</div> 
 	<button type="submit">Apply</button>
 </form>
@@ -95,6 +99,8 @@ var count = pol;
 
 var hide_below = .3;
 
+var min_price = 100;
+
 var timer = 0;
 
 function load_instruments(dat){
@@ -151,7 +157,7 @@ function update_view(){
 	show=[];
 
 	instruments.forEach(function(t){
-		if(Math.abs(t.change)>hide_below){
+		if(Math.abs(t.change)>hide_below && t.price>(.00000001*min_price)){
 			show.push(t); 
 		} 
 	});
@@ -180,6 +186,7 @@ function update_view(){
 function update_tracker(){
 	pol = count = Number($("#pol").val());
 	hide_below = Number($("#min").val());
+	min_price = Number($("#min_price").val());
 	return false;
 }
 
