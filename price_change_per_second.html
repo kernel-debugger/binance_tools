@@ -204,8 +204,8 @@ function update_view(){
 		row="<a data-change='"+t.change+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.lastPrice+"</div>\
-				<div>"+t.priceChangePercent+"</div>\
-				<div>"+t.volume+"</div>\
+				<div>"+t.priceChangePercent+"%</div>\
+				<div>"+t.quoteVolume.split(".")[0]+"</div>\
 				<div>"+t.change+"<span class='prev' data-change='"+t.prev+"'>"+t.prev+"</span></div>\
 			</a>";
 
