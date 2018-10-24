@@ -13,6 +13,10 @@
 		<input type="number" name="price" id="min_price" min='1' placeholder="Default 100sat" value='100' required="">
 	</div> 
 	<div>
+		<label for="min_volume">Min volume (in BTC)</label>
+		<input type="number" name="price" id="min_price" min='1' placeholder="Default .2BTC" value='.2' required="">
+	</div> 
+	<div>
 		<div id="countdown-1">00</div>
 		<button type="submit">Apply</button>
 	</div>
@@ -92,6 +96,9 @@ button{
 	width: calc(100% / 5);
 	text-align: left;
 }
+.table a>div:nth-child(5){
+	text-align: right;
+	}
 .table>a:hover{
 	background: #222;
 }
@@ -130,6 +137,8 @@ var hide_below = .3;
 
 var min_price = 100;
 
+var min_vol = .2;
+
 var timer = 0;
 
 function load_instruments(dat){
@@ -165,14 +174,20 @@ function updater(){
 												return false;
 										});
 										if(id>-1){
+
 											ins = instruments[id];
-											instruments[id].change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
-											instruments[id].lastPrice=dt.lastPrice;
+
+				instruments[id].price_change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
+				instruments[id].vol_change = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
+				instruments[id].lastPrice=dt.lastPrice;
+				instruments[id].quoteVolume=dt.quoteVolume;
+
+
 										}
 									});
 									update_view();
 									instruments.forEach(function(t){
-										t.prev=t.change;
+										t.prev=t.price_change;
 									});
 						}
 					});
@@ -185,15 +200,15 @@ function update_view(){
 	show=[];
 
 	instruments.forEach(function(t){
-		if(Math.abs(t.change)>hide_below && t.lastPrice>(.00000001*min_price)){
+		if(Math.abs(t.price_change)>hide_below && t.lastPrice>(.00000001*min_price) && Math.abs(t.vol_change)>min_vol) {
 			show.push(t); 
 		} 
 	});
 
 	show.sort(function(a,b){
-			if(a.change<b.change)	
+			if(a.price_change<b.price_change)	
 				return 1;
-			else if(a.change>b.change)
+			else if(a.price_change>b.price_change)
 				return -1;
 			else
 				return 0;
@@ -201,12 +216,13 @@ function update_view(){
 
 	show.forEach(function(t){
 
-		row="<a data-change='"+t.change+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
+		row="<a data-change='"+t.price_change+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.lastPrice+"</div>\
 				<div>"+Number.parseFloat(t.priceChangePercent).toFixed(1)+"%</div>\
 				<div>"+t.quoteVolume.split(".")[0]+"BTC</div>\
-				<div>"+t.change+"%<span class='prev' data-change='"+t.prev+"'>"+t.prev+"%</span></div>\
+				<div>"+t.vol_change+"BTC</div>\
+				<div>"+t.price_change+"%<span class='prev' data-change='"+t.prev+"'>"+t.prev+"%</span></div>\
 			</a>";
 
 		$("#table-1").append(row);
