@@ -253,7 +253,8 @@ function updater(){
 									});
 									update_view();
 									instruments.forEach(function(t){
-										t.prev=t.price_change;
+										if(t.change!=0)
+											t.prev=t.price_change;
 									});
 						}
 					});
@@ -267,7 +268,6 @@ function update_view(){
 
 	instruments.forEach(function(t){
 		if(Math.abs(t.price_change)>min_price_change && t.lastPrice>(.00000001*min_coin_price) &&  t.vol_change > min_vol_change && t.quoteVolume>min_coin_vol) {
-
 			t.appearances++; 
 			show.push(t); 
 		} 
