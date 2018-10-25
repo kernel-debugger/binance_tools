@@ -46,7 +46,7 @@
 			<div>Recent Price %</div>
 </div>
 <div class='table' id="table-1"></div>
-<div class="version">V0.39</div>
+<div class="version">V0.042</div>
 <style>
 body{
 	font-family:tahoma;
@@ -116,7 +116,7 @@ button,select{
     justify-content: space-around;
     border-bottom: 1px solid #3e401a;
     padding: 5px 0px;
-    color: orange;
+    color: lightskyblue;
 }
 .table a>div{
 	width: calc(100% / 5);
@@ -135,13 +135,13 @@ button,select{
 	border:1px solid;
 	border-radius: 3px;
 	display: inline-block;
-	min-width: 40px;
+	min-width: 30px;
 }
-.table a, .table span.prev{
+.table span.price_change{
 	color: rgb(112, 168, 0);
 }
 
-.table a[data-change^="-"], .table span.prev[data-change^="-"]{
+.table span.price_change[data-change^="-"]{
 	color:rgb(234, 0, 112);
 }
 .version{
@@ -172,6 +172,8 @@ button,select{
 
 var instruments=[];
 
+var all_instruments = null;
+
 var pol = Number($("#pol").val());
 
 var count = pol;
@@ -189,6 +191,12 @@ var market = $("#market").val();
 var timer = 0;
 
 function load_instruments(dat){
+
+instruments=[];
+if(dat)
+all_instruments = dat;
+else
+dat = all_instruments;
 
 				dat.forEach(function(item){
 						if(item.symbol.indexOf(market)>0){
@@ -214,9 +222,9 @@ function updater(){
 						url:"https://api.binance.com/api/v1/ticker/24hr",
 						success:function(dt){
 									dt.forEach(function(dt){
-										the = dt.symbol;
+										sym = dt.symbol;
 										id = instruments.findIndex(function(e){
-											if(e.symbol==the)
+											if(e.symbol==sym)
 												return true;
 											else 
 												return false;
@@ -225,13 +233,23 @@ function updater(){
 
 											ins = instruments[id];
 
-				instruments[id].price_change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
-				instruments[id].vol_change   = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
-				instruments[id].lastPrice=dt.lastPrice;
-				instruments[id].quoteVolume=dt.quoteVolume;
+				price_change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
+				vol_change   = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
+				vol_change_net = Number.parseFloat(dt.quoteVolume-ins.quoteVolume).toFixed(1);
 
+				app = instruments[id].appearances;
+				prev = instruments[id].prev;
+				prev_vol = instruments[id].prev_vol;
 
-										}
+				instruments[id]=dt;
+
+				instruments[id].price_change = price_change;
+				instruments[id].vol_change = vol_change;
+				instruments[id].appearances = app;
+				instruments[id].vol_change_net = vol_change_net;
+				instruments[id].prev = prev;
+
+									 }
 									});
 									update_view();
 									instruments.forEach(function(t){
@@ -264,30 +282,41 @@ function update_view(){
 				return 0;
 		});
 
+	$("#table-1").prepend("<hr>");
+
 	show.forEach(function(t){
 
-		row="<a data-change='"+t.price_change+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
+		row="<a target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
 				<div>"+t.appearances+"</div>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.lastPrice+"</div>\
-				<div>"+Number.parseFloat(t.priceChangePercent).toFixed(1)+"%</div>\
+				<div><span class='price_change' data-change='"+t.priceChangePercent+"'>"+Number.parseFloat(t.priceChangePercent).toFixed(1)+"%</span></div>\
 				<div>"+t.quoteVolume.split(".")[0]+"BTC</div>\
-				<div>"+t.vol_change+"%</div>\
-				<div>"+t.price_change+"%<span class='prev' data-change='"+t.prev+"'>"+t.prev+"%</span></div>\
+				<div>"+t.vol_change+"%<span class='prev'>"+t.vol_change_net+"BTC</span></div>\
+				<div><span  class='price_change' data-change='"+t.price_change+"'>"+t.price_change+"%</span>\
+					 <span title='Change during previous appearance' class='price_change prev' data-change='"+t.prev+"'>"+t.prev+"%</span>\
+				</div>\
 			</a>";
 
 		$("#table-1").prepend(row);
 	});
-	$("#table-1").prepend("<hr>");
+	
 }
 
 function update_tracker(){
+
 	pol = count = Number($("#pol").val());
-	min_price_change = Number($("#min_price_change").val());
+
 	market = $("#market").val();
+
+	load_instruments(); // reload instruments with new market
+
+	min_price_change = Number($("#min_price_change").val());
+	min_vol_change = Number($("#min_vol_change").val());
+
 	min_coin_price = Number($("#min_coin_price").val());
 	min_coin_vol   = Number($("#min_coin_vol").val()); 
-	min_vol_change = Number($("#min_vol_change").val());
+
 	return false;
 }
 
