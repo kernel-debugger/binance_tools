@@ -2,37 +2,61 @@
 <form action="#" method="get" onsubmit="return update_tracker()">
 	<div>
 		<label for="pol">Check price every x seconds</label>
-		<input type="number" name="per"  id="pol" min='5'  placeholder="Default 30s" value='30' required="">
+		<input type="number" name="per"  id="pol" min='10'  placeholder="Default 60s" value='60' required="">
 	</div>
+
 	<div>
-		<label for="min">Hide coin below x percent change</label>
-		<input type="number" name="hide" id="min" min='0.2' step="0.01" placeholder="Default .3%" value='.3' required="">
+		<label for="market">Market</label>
+		<select name="market" id="market" required="">
+			<option value="BTC">BTC</option>
+			<option value="USDT">USDT</option>
+			<option value="ETH">ETH</option>
+			<option value="BNB">BNB</option>
+		</select>
+	</div> 
+
+	<div>
+		<label for="min_coin_price">Min price of coin (Sats)</label>
+		<input type="number" name="price" id="min_coin_price"  placeholder="Default 100Sats" value='100' required="">
 	</div> 
 	<div>
-		<label for="min_price">Min price (in sats)</label>
-		<input type="number" name="price" id="min_price" min='1' placeholder="Default 100sat" value='100' required="">
+		<label for="min_coin_vol">Min volume in 24h (BTC)</label>
+		<input type="number" name="24hvol" id="min_coin_vol" step="50" placeholder="Default 100BTC" value='100' required="">
 	</div> 
 	<div>
-		<label for="min_volume">Min volume (in BTC)</label>
-		<input type="number" name="price" id="min_price" min='1' placeholder="Default .2BTC" value='.2' required="">
+		<label for="min_vol_change">Min volume change (%)</label>
+		<input type="number" name="volume" id="min_vol_change"  step="0.01" placeholder="Default .3%" value='.3' required="">
+	</div> 
+	<div>
+		<label for="min_price_change">Min price change (%)</label>
+		<input type="number" name="hide" id="min_price_change" step="0.01" placeholder="Default .2%" value='.2' required="">
 	</div> 
 	<div>
 		<div id="countdown-1">00</div>
 		<button type="submit">Apply</button>
 	</div>
 </form>
+<div class="headers">
+			<div>Appearances</div>
+			<div>Symbol</div>
+			<div>Price</div>
+			<div>24h Price %</div>
+			<div>24h Vol</div>
+			<div>Recent Vol %</div>
+			<div>Recent Price %</div>
+</div>
 <div class='table' id="table-1"></div>
 <div class="version">V0.39</div>
 <style>
 body{
 	font-family:tahoma;
 	font-size:15px;
-    color: #e2e2e2;
+    color: #8c8c8c;
     position: relative;
     background-color: #262e33;
 }
 form{
-	max-width: 700px;
+	max-width: 800px;
 	margin: auto;
 	text-align: center;
 	padding:20px 0px 10px 0px;
@@ -62,14 +86,16 @@ input{
 input:focus{
 	box-shadow: 0 0 3px orange;
 	}
-button{
+button,select{
 	width: 100px;
+	cursor: pointer;
 	outline: none;
 	height: 30px;
 	color: orange;
 	background:#262e33 !important;
 	border: 1px solid orange;
 	border-radius: 3px;
+	padding: 5px;
 }
 #countdown-1{
     text-align: center;
@@ -81,7 +107,7 @@ button{
 }
 .table{
 	text-align: center;
-	max-width: 700px;
+	max-width: 800px;
 	margin: auto;
 }
 .table>a{
@@ -96,7 +122,7 @@ button{
 	width: calc(100% / 5);
 	text-align: left;
 }
-.table a>div:nth-child(6){
+.table a>div:nth-child(7){
 	text-align: right;
 	}
 .table>a:hover{
@@ -124,28 +150,50 @@ button{
 	right: 0;
 	color: slategray;
 }
+.headers{
+	margin:auto;
+	padding-top:10px;
+	margin-bottom: 10px;
+	max-width: 800px;
+	display: flex;
+	justify-content: space-between;
+	font-weight: bold;
+	font-size: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #8ad09c;
+}
+.headers div{
+	width: calc(100% / 7);
+	text-align: left;
+	padding-right: 20px;
+}
 </style>
 <script>
 
 var instruments=[];
 
-var pol = 30;
+var pol = Number($("#pol").val());
 
 var count = pol;
 
-var hide_below = .3;
+var min_price_change = Number($("#min_price_change").val()); // percent change
 
-var min_price = 100;
+var min_coin_price = Number($("#min_coin_price").val()); // min price of coin
 
-var min_vol = .2;
+var min_coin_vol = Number($("#min_coin_vol").val()); // min 24h volume of coin
+
+var min_vol_change = Number($("#min_vol_change").val());
+
+var market = $("#market").val();
 
 var timer = 0;
 
 function load_instruments(dat){
 
 				dat.forEach(function(item){
-						if(item.symbol.indexOf("BTC")>0){
+						if(item.symbol.indexOf(market)>0){
 							item.prev=0;
+							item.appearances=0;
 							instruments.push(item);
 						}
 					});
@@ -178,7 +226,7 @@ function updater(){
 											ins = instruments[id];
 
 				instruments[id].price_change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
-				instruments[id].vol_change = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
+				instruments[id].vol_change   = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
 				instruments[id].lastPrice=dt.lastPrice;
 				instruments[id].quoteVolume=dt.quoteVolume;
 
@@ -195,21 +243,23 @@ function updater(){
 
 function update_view(){
 
-	$(".table").html("");
+	//$(".table").html("");
 
 	show=[];
 
 	instruments.forEach(function(t){
-		if(Math.abs(t.price_change)>hide_below && t.lastPrice>(.00000001*min_price) && Math.abs(t.vol_change)>min_vol) {
+		if(Math.abs(t.price_change)>min_price_change && t.lastPrice>(.00000001*min_coin_price) &&  t.vol_change > min_vol_change && t.quoteVolume>min_coin_vol) {
+
+			t.appearances++; 
 			show.push(t); 
 		} 
 	});
 
 	show.sort(function(a,b){
 			if(a.price_change<b.price_change)	
-				return 1;
-			else if(a.price_change>b.price_change)
 				return -1;
+			else if(a.price_change>b.price_change)
+				return 1;
 			else
 				return 0;
 		});
@@ -217,22 +267,27 @@ function update_view(){
 	show.forEach(function(t){
 
 		row="<a data-change='"+t.price_change+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
+				<div>"+t.appearances+"</div>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.lastPrice+"</div>\
 				<div>"+Number.parseFloat(t.priceChangePercent).toFixed(1)+"%</div>\
 				<div>"+t.quoteVolume.split(".")[0]+"BTC</div>\
-				<div>"+t.vol_change+"BTC</div>\
+				<div>"+t.vol_change+"%</div>\
 				<div>"+t.price_change+"%<span class='prev' data-change='"+t.prev+"'>"+t.prev+"%</span></div>\
 			</a>";
 
-		$("#table-1").append(row);
+		$("#table-1").prepend(row);
 	});
+	$("#table-1").prepend("<hr>");
 }
 
 function update_tracker(){
 	pol = count = Number($("#pol").val());
-	hide_below = Number($("#min").val());
-	min_price = Number($("#min_price").val());
+	min_price_change = Number($("#min_price_change").val());
+	market = $("#market").val();
+	min_coin_price = Number($("#min_coin_price").val());
+	min_coin_vol   = Number($("#min_coin_vol").val()); 
+	min_vol_change = Number($("#min_vol_change").val());
 	return false;
 }
 
@@ -241,9 +296,17 @@ function init(){
 			success:load_instruments
 			});
 }
+
+function clearAppearances(){
+		instruments.forEach(function(t){
+			t.appearances=0;
+		});
+}
  
 init();
 
 timer = setInterval(tick,1000);
+
+appearance_cleaner = setInterval(clearAppearances,1000*60*60)
 
 </script>
