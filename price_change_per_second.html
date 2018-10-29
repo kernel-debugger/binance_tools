@@ -30,6 +30,7 @@
 		<input type="number" name="hide" id="min_price_change" step="0.01" placeholder="Default .2%" value='.2' required="">
 	</div> 
 	<div>
+		<div id="clock">0 : 0 : 0</div>
 		<div id="countdown-1">00</div>
 		<button type="submit">Apply</button>
 	</div>
@@ -188,13 +189,15 @@ var market = $("#market").val();
 
 var timer = 0;
 
+var clock = 0;
+
 function load_instruments(dat){
 
-instruments=[];
-if(dat)
-all_instruments = dat;
-else
-dat = all_instruments;
+				instruments=[];
+				if(dat)
+				all_instruments = dat;
+				else
+				dat = all_instruments;
 
 				dat.forEach(function(item){
 						if(item.symbol.indexOf(market)>0){
@@ -206,11 +209,14 @@ dat = all_instruments;
 }
 
 function tick(){
+
 	$("#countdown-1").html(count);
 	if(count==0){
 		count=pol;
 		updater();
 	}
+	$("#clock").html((Math.floor((clock/60)/60))+" : "+Math.floor(clock/60)+" : "+clock%60);
+	clock++;
 	count--;
 }
 
