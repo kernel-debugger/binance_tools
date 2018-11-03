@@ -116,6 +116,8 @@ button,select{
     border-bottom: 1px solid #3e401a;
     padding: 5px 0px;
     color: lightskyblue;
+        padding-left: 5px;
+    padding-right: 5px;
 }
 .table a>div{
 	width: calc(100% / 5);
@@ -166,6 +168,10 @@ button,select{
 	text-align: left;
 	padding-right: 20px;
 }
+a[data-highlight='true']{
+	    border: 1px solid orange;
+    background: #191300;
+}
 </style>
 <script>
 
@@ -191,6 +197,10 @@ var timer = 0;
 
 var clock = 0;
 
+var aud = document.createElement('audio');
+    aud.setAttribute('src', 'alert.mp3');
+    
+
 function load_instruments(dat){
 
 				instruments=[];
@@ -201,8 +211,10 @@ function load_instruments(dat){
 
 				dat.forEach(function(item){
 						if(item.symbol.indexOf(market)>0){
-							item.prev=0;
+							item.prev_price_change=0;
+							item.prev_vol_change=0;
 							item.appearances=0;
+							item.recent_appeared=false;
 							instruments.push(item);
 						}
 					});
@@ -233,32 +245,36 @@ function updater(){
 											else 
 												return false;
 										});
-										if(id>-1){
 
-											ins = instruments[id];
+			if(id>-1){
 
-				price_change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
-				vol_change   = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
-				vol_change_net = Number.parseFloat(dt.quoteVolume-ins.quoteVolume).toFixed(1);
+				ins = instruments[id];
 
-				app = instruments[id].appearances;
-				prev = instruments[id].prev;
-				prev_vol = instruments[id].prev_vol;
+				dt.price_change = Number.parseFloat(100*((dt.lastPrice-ins.lastPrice)/ins.lastPrice)).toFixed(2);
+				dt.prev_price_change = ins.prev_price_change; 
 
-				instruments[id]=dt;
+				dt.vol_change   = Number.parseFloat(100*((dt.quoteVolume-ins.quoteVolume)/ins.quoteVolume)).toFixed(1);
+				dt.vol_change_net = Number.parseFloat(dt.quoteVolume-ins.quoteVolume).toFixed(1);
+				dt.prev_vol_change = ins.prev_vol_change;
 
-				instruments[id].price_change = price_change;
-				instruments[id].vol_change = vol_change;
-				instruments[id].appearances = app;
-				instruments[id].vol_change_net = vol_change_net;
-				instruments[id].prev = prev;
+				dt.recent_appeared = ins.recent_appeared;
+				dt.appearances = ins.appearances;
 
-									 }
+				instruments[id]=dt; // to update all default fields
+
+			}
+
 									});
+
 									update_view();
+
 									instruments.forEach(function(t){
-										if(Math.abs(t.price_change)>min_price_change && t.lastPrice>(.00000001*min_coin_price) &&  t.vol_change > min_vol_change && t.quoteVolume>min_coin_vol)
-											t.prev=t.price_change;
+
+										t.prev_vol_change = t.vol_change;
+
+if(Math.abs(t.price_change)>min_price_change && t.lastPrice>(.00000001*min_coin_price) &&  t.vol_change > min_vol_change && t.quoteVolume>min_coin_vol){
+											t.prev_price_change=t.price_change; 
+										} 
 									});
 						}
 					});
@@ -272,9 +288,22 @@ function update_view(){
 
 	instruments.forEach(function(t){
 		if(Math.abs(t.price_change)>min_price_change && t.lastPrice>(.00000001*min_coin_price) &&  t.vol_change > min_vol_change && t.quoteVolume>min_coin_vol) {
-			t.appearances++; 
+
+			if(t.vol_change > t.prev_vol_change && t.price_change>0 && t.recent_appeared){
+
+				play_sound();
+				t.highlight = true
+			}
+			else{
+				t.highlight = false;
+			}
+
+			t.appearances++;
+			t.recent_appeared = true;
 			show.push(t); 
 		} 
+		else
+			t.recent_appeared = false;
 	});
 
 	show.sort(function(a,b){
@@ -290,7 +319,7 @@ function update_view(){
 
 	show.forEach(function(t){
 
-		row="<a target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
+		row="<a data-highlight='"+t.highlight+"' target='_blank' href='https://www.binance.com/en/trade/pro/"+t.symbol.replace("BTC","_BTC")+"'>\
 				<div>"+t.appearances+"</div>\
 				<div>"+t.symbol+"</div>\
 				<div>"+t.lastPrice+"</div>\
@@ -298,7 +327,7 @@ function update_view(){
 				<div>"+t.quoteVolume.split(".")[0]+"BTC</div>\
 				<div>"+t.vol_change+"%<span class='prev'>"+t.vol_change_net+"BTC</span></div>\
 				<div><span  class='price_change' data-change='"+t.price_change+"'>"+t.price_change+"%</span>\
-					 <span title='Change during previous appearance' class='price_change prev' data-change='"+t.prev+"'>"+t.prev+"%</span>\
+					 <span title='Change during previous appearance' class='price_change prev' data-change='"+t.prev_price_change+"'>"+t.prev_price_change+"%</span>\
 				</div>\
 			</a>";
 
@@ -328,18 +357,14 @@ function init(){
 	$.getJSON({url:"https://api.binance.com/api/v1/ticker/24hr",
 			success:load_instruments
 			});
-}
-
-function clearAppearances(){
-		instruments.forEach(function(t){
-			t.appearances=0;
-		});
-}
+} 
  
 init();
 
-timer = setInterval(tick,1000);
+function play_sound(){
+aud.play();
+}
 
-appearance_cleaner = setInterval(clearAppearances,1000*60*60)
+timer = setInterval(tick,1000); 
 
 </script>
