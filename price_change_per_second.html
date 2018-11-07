@@ -289,7 +289,7 @@ function update_view(){
 	instruments.forEach(function(t){
 		if(Math.abs(t.price_change)>min_price_change && t.lastPrice>(.00000001*min_coin_price) &&  t.vol_change > min_vol_change && t.quoteVolume>min_coin_vol) {
 
-			if(t.vol_change > t.prev_vol_change && t.price_change>0 && t.recent_appeared){
+			if((t.vol_change > t.prev_vol_change && t.price_change>0 && t.recent_appeared) || (t.vol_change>2 && t.price_change>0)) {
 
 				play_sound();
 				t.highlight = true
